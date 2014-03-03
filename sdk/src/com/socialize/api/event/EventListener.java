@@ -22,6 +22,7 @@
 package com.socialize.api.event;
 
 import com.socialize.api.SocializeApi.RequestType;
+import com.socialize.api.SocializeRequest;
 import com.socialize.api.SocializeResponse;
 import com.socialize.listener.SocializeActionListener;
 
@@ -37,6 +38,11 @@ public abstract class EventListener implements SocializeActionListener {
 		onPost();
 	}
 
-	public abstract void onPost();
+    // Subclasses override
+    @Override
+    public void onDoInBackground(SocializeRequest request, SocializeResponse response) {
+    }
+
+    public abstract void onPost();
 	
 }

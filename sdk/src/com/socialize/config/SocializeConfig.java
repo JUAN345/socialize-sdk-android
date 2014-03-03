@@ -59,6 +59,8 @@ public class SocializeConfig {
 	
 	public static final String SOCIALIZE_NOTIFICATIONS_INTERVAL = "socialize.notification.request.interval";
 	public static final String SOCIALIZE_NOTIFICATIONS_ENABLED = "socialize.notification.enabled";
+
+    public static final String SOCIALIZE_LOOPY_ENABLED = "loopy.enabled";
 	
 	@Deprecated
 	public static final String SOCIALIZE_C2DM_SENDER_ID = "socialize.c2dm.sender.id";
@@ -510,4 +512,8 @@ public class SocializeConfig {
 	protected void setEntityLoaderCheckEnabled(boolean entityLoaderCheckEnabled) {
 		ENTITY_LOADER_CHECK_ENABLED = entityLoaderCheckEnabled;
 	}
+
+    public boolean isLoopyEnabled() {
+        return getBooleanProperty(SOCIALIZE_LOOPY_ENABLED, true);
+    }
 }

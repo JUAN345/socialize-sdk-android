@@ -24,6 +24,7 @@ package com.socialize.listener;
 
 import com.socialize.api.SocializeApi.RequestType;
 import com.socialize.api.SocializeEntityResponse;
+import com.socialize.api.SocializeRequest;
 import com.socialize.api.SocializeResponse;
 import com.socialize.entity.ListResult;
 import com.socialize.entity.SocializeObject;
@@ -72,7 +73,11 @@ public abstract class AbstractSocializeListener<T extends SocializeObject> imple
 		}
 	}
 
-	public abstract void onGet(T result);
+    @SuppressWarnings("unused")
+    // Subclasses override
+    public void onDoInBackground(SocializeRequest request, T response) {}
+
+    public abstract void onGet(T result);
 
 	public abstract void onList(ListResult<T> result);
 
@@ -81,8 +86,15 @@ public abstract class AbstractSocializeListener<T extends SocializeObject> imple
 	public abstract void onCreate(T result);
 	
 	public abstract void onDelete();
-	
-	// Subclasses override
+
+    @Override
+    public final void onDoInBackground(SocializeRequest request, SocializeResponse response) {
+        @SuppressWarnings("unchecked")
+        SocializeEntityResponse<T> entityResponse = (SocializeEntityResponse<T>) response;
+        onDoInBackground(request, entityResponse.getFirstResult());
+    }
+
+    // Subclasses override
 	public void onCancel() {}
 
 	@Override
@@ -90,14 +102,9 @@ public abstract class AbstractSocializeListener<T extends SocializeObject> imple
 	
 	/**
 	 * Returns true if the error reported is a 404 (not found)
-	 * @param error
-	 * @return
 	 */
 	protected final boolean isNotFoundError(SocializeException error) {
-		if(error instanceof SocializeApiError) {
-			return ((SocializeApiError)error).getResultCode() == 404;
-		}
-		return false;
-	}
+        return error instanceof SocializeApiError && ((SocializeApiError) error).getResultCode() == 404;
+    }
 
 }

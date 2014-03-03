@@ -148,8 +148,7 @@ public interface SocializeService extends SocializeSessionConsumer {
 	 * @param permissions One or more custom permissions used by the call.  (Currently only used by FACEBOOK)
 	 */
 	public void authenticateForWrite(Context context, AuthProviderType authProvider, SocializeAuthListener authListener, String...permissions);
-	
-	
+
 	/**
 	 * Authenticates the application against the API.
 	 * @param context The current context.

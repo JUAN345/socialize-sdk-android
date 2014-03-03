@@ -22,6 +22,7 @@
 package com.socialize.listener;
 
 import com.socialize.api.SocializeApi.RequestType;
+import com.socialize.api.SocializeRequest;
 import com.socialize.api.SocializeResponse;
 
 /**
@@ -29,6 +30,8 @@ import com.socialize.api.SocializeResponse;
  */
 public interface SocializeActionListener extends SocializeListener {
 
+    public void onDoInBackground(SocializeRequest request, SocializeResponse response);
+
 	public void onResult(RequestType type, SocializeResponse response);
-	
+
 }

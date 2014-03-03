@@ -27,15 +27,19 @@ import android.location.Location;
 import com.socialize.Socialize;
 import com.socialize.SocializeService;
 import com.socialize.api.SocializeApi;
+import com.socialize.api.SocializeRequest;
+import com.socialize.api.SocializeResponse;
 import com.socialize.api.SocializeSession;
 import com.socialize.api.action.ShareType;
 import com.socialize.auth.AuthProviderType;
 import com.socialize.config.SocializeConfig;
 import com.socialize.entity.Entity;
+import com.socialize.entity.PropagationInfo;
 import com.socialize.entity.Share;
 import com.socialize.entity.SocializeAction;
 import com.socialize.error.SocializeException;
 import com.socialize.listener.SocializeAuthListener;
+import com.socialize.listener.share.ShareAddListener;
 import com.socialize.listener.share.ShareListener;
 import com.socialize.log.SocializeLogger;
 import com.socialize.networks.SocialNetwork;
@@ -55,6 +59,10 @@ public class SocializeShareSystem extends SocializeApi<Share, SocializeProvider<
 	private ShareHandlers shareHandlers;
 	
 	private SocializeLogger logger;
+
+    private SocializeConfig config;
+
+    private ExternalShareSystem externalShareSystem;
 	
 	public SocializeShareSystem(SocializeProvider<Share> provider) {
 		super(provider);
@@ -63,11 +71,8 @@ public class SocializeShareSystem extends SocializeApi<Share, SocializeProvider<
 	@Override
 	public boolean canShare(Context context, ShareType shareType) {
 		ShareHandler shareHandler = shareHandlers.getShareHandler(shareType);
-		if(shareHandler != null) {
-			return shareHandler.isAvailableOnDevice(context);
-		}
-		return false;
-	}
+        return shareHandler != null && shareHandler.isAvailableOnDevice(context);
+    }
 
 	@Override
 	public void addShare(Context context, SocializeSession session, Entity entity, String text, SocialNetwork network, Location location, ShareListener listener) {
@@ -157,11 +162,15 @@ public class SocializeShareSystem extends SocializeApi<Share, SocializeProvider<
 		addShare(session, entity, "", shareType, null, listener, network);
 	}
 	
-	public void addShare(SocializeSession session, Entity entity, String text, ShareType shareType, Location location, ShareListener listener, SocialNetwork...network) {
+	public void addShare(SocializeSession session, final Entity entity, String text, ShareType shareType, Location location, ShareListener listener, SocialNetwork...network) {
 		
 		if(text == null) {
 			text = "";
 		}
+
+        if(shareType == null) {
+            shareType = ShareType.OTHER;
+        }
 		
 		Share c = new Share();
 		c.setEntitySafe(entity);
@@ -170,23 +179,51 @@ public class SocializeShareSystem extends SocializeApi<Share, SocializeProvider<
 		
 		if(network != null && network.length > 0) {
 			ShareOptions shareOptions = new ShareOptions();
-			
-			// TODO: Is this needed?
 			shareOptions.setShowAuthDialog(true);
-			
 			setPropagationData(c, shareOptions, network);
 		}
-		else if(shareType != null) {
+		else {
 			// Set propagation data for non-network share types
 			setPropagationData(c, shareType);
 		}
-	
+
 		setLocation(c);
 		
 		List<Share> list = new ArrayList<Share>(1);
 		list.add(c);
-		
-		postAsync(session, ENDPOINT, list, listener);
+
+        if(config.isLoopyEnabled() && externalShareSystem != null) {
+
+            final ShareType sType = shareType;
+            final ShareListener fListener = listener;
+
+            listener = new ShareAddListener() {
+
+                @Override
+                public void onDoInBackground(SocializeRequest request, Share response) {
+                    if(externalShareSystem != null) {
+                        try {
+                            externalShareSystem.reportShare(entity, sType, response);
+                        } catch (Exception e) {
+                            logger.error("Error reporting share to external system", e);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCreate(Share share) {
+                    // Call the original listener
+                    fListener.onCreate(share);
+                }
+
+                @Override
+                public void onError(SocializeException error) {
+                    fListener.onError(error);
+                }
+            };
+        }
+
+        postAsync(session, ENDPOINT, list, listener);
 	}
 	
 	/* (non-Javadoc)
@@ -306,5 +343,15 @@ public class SocializeShareSystem extends SocializeApi<Share, SocializeProvider<
 
 	public void setLogger(SocializeLogger logger) {
 		this.logger = logger;
-	}	
+	}
+
+    public void setConfig(SocializeConfig config) {
+        this.config = config;
+    }
+
+    // Set from DI config
+    @SuppressWarnings("unused")
+    public void setExternalShareSystem(ExternalShareSystem externalShareSystem) {
+        this.externalShareSystem = externalShareSystem;
+    }
 }

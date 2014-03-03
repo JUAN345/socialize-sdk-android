@@ -367,10 +367,17 @@
 		<property name="objectFactory" ref="shareFactory"/>
 		<property name="requestFactory" ref="shareRequestFactory"/>
 	</bean>
-	
+
+    <!-- Loopy Baby! -->
+    <bean id="externalShareSystem" class="com.socialize.loopy.LoopyShareSystem">
+        <property name="logger" ref="logger"/>
+    </bean>
+
 	<bean id="shareSystem" class="com.socialize.api.action.share.SocializeShareSystem" extends="socializeApi">
 		<constructor-arg ref="shareProvider"/>
 		<property name="logger" ref="logger"/>
+        <property name="config" ref="config"/>
+        <property name="externalShareSystem" ref="externalShareSystem"/>
 		<property name="shareHandlers" ref="shareHandlers"/>
 	</bean>
 	

@@ -66,9 +66,9 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 	private AppUtils appUtils;
 	protected SocializeConfig config;
 	
-	public static enum RequestType {AUTH,PUT,POST,PUT_AS_POST,GET,LIST,LIST_AS_GET,LIST_WITHOUT_ENTITY,DELETE};
-	
-	public SocializeApi(P provider) {
+	public static enum RequestType {AUTH,PUT,POST,PUT_AS_POST,GET,LIST,LIST_AS_GET,LIST_WITHOUT_ENTITY,DELETE}
+
+    public SocializeApi(P provider) {
 		super();
 		this.provider = provider;
 	}
@@ -106,9 +106,10 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 	
 	protected void setPropagationData(SocializeAction action, ActionOptions shareOptions, SocialNetwork...networks) {
 		
-		boolean selfManaged = (shareOptions == null) ? false : shareOptions.isSelfManaged();
-		
-		if(networks != null) {
+		boolean selfManaged;
+        selfManaged = (shareOptions != null) && shareOptions.isSelfManaged();
+
+        if(networks != null) {
 			Propagation propagation = null;
 			Propagation localPropagation = null;
 			
@@ -365,10 +366,6 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 
 	/**
 	 * Does a POST, but expects a single object in return.
-	 * @param session
-	 * @param endpoint
-	 * @param object
-	 * @param listener
 	 */
 	@SuppressWarnings("unchecked")
 	public void putAsPostAsync(SocializeSession session, String endpoint, T object, SocializeActionListener listener) {
@@ -391,7 +388,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 			final SocializeSessionConsumer sessionConsumer, 
 			boolean do3rdPartyAuth) {
 
-		SocializeActionListener wrapper = null;
+		SocializeActionListener wrapper;
 		
 		final SocializeAuthListener localListener = new SocializeAuthListener() {
 			
@@ -444,8 +441,13 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 				SocializeAuthResponse authResponse = (SocializeAuthResponse) response;
 				localListener.onAuthSuccess(authResponse.getSession());
 			}
-			
-			@Override
+
+            @Override
+            public void onDoInBackground(SocializeRequest request, SocializeResponse response) {
+                // Do nothing
+            }
+
+            @Override
 			public void onError(SocializeException error) {
 				if(httpUtils != null && httpUtils.isAuthError(error)) {
 					localListener.onAuthFail(error);
@@ -472,7 +474,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		}
 		else {
 			// Do normal auth
-			handleRegularAuth(context, request, wrapper, localListener, key, secret);
+			handleRegularAuth(context, request, wrapper);
 		}
 	}
 	
@@ -503,7 +505,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		}
 	}
 	
-	protected void handleRegularAuth(Context context, SocializeAuthRequest request, SocializeActionListener wrapper, SocializeAuthListener listener, String key, String secret) {
+	protected void handleRegularAuth(Context context, SocializeAuthRequest request, SocializeActionListener wrapper) {
 		AsyncAuthenicator authenicator = new AsyncAuthenicator(context, null, wrapper);
 		authenicator.execute(request);
 	}
@@ -565,7 +567,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 						authProviderData.setSecret3rdParty(response.getSecret());
 						
 						// Do normal auth (forced)
-						handleRegularAuth(context, request, wrapper, listener, key, secret);
+						handleRegularAuth(context, request, wrapper);
 					}
 					
 					@Override
@@ -673,7 +675,15 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 			}
 			catch (Exception error) {
 				this.error = error;
-			}
+			} finally {
+                if(listener != null) {
+                    try {
+                        listener.onDoInBackground(request, result);
+                    } catch (Exception e) {
+                        logger.error("Error while executing listener", e);
+                    }
+                }
+            }
 			
 			return result;
 		}
@@ -701,7 +711,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		
 		@Override
 		protected SocializeAuthResponse doInBackground(final SocializeAuthRequest request) throws SocializeException {
-			SocializeAuthResponse response = null;
+			SocializeAuthResponse response;
 			
 			if(responseFactory != null) {
 				response = responseFactory.newAuthResponse();
@@ -757,7 +767,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		@Override
 		protected SocializeEntityResponse<T> doInBackground(SocializePutRequest<T> request) throws SocializeException {
 
-			SocializeEntityResponse<T> response = null;
+			SocializeEntityResponse<T> response;
 			
 			if(responseFactory != null) {
 				response = responseFactory.newEntityResponse();
@@ -828,7 +838,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		}
 	}
 	
-	public static final <T extends SocializeObject> void handleResults(SocializeEntityResponse<T> result, SocializeLogger logger) throws SocializeException {
+	public static <T extends SocializeObject> void handleResults(SocializeEntityResponse<T> result, SocializeLogger logger) throws SocializeException {
 		ListResult<T> results = result.getResults();
 		
 		if(results != null) {
@@ -869,7 +879,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 		@Override
 		protected SocializeEntityResponse<T> doInBackground(SocializeGetRequest request) throws SocializeException {
 
-			SocializeEntityResponse<T> response = null;
+			SocializeEntityResponse<T> response;
 			
 			if(responseFactory != null) {
 				response = responseFactory.newEntityResponse();
@@ -878,7 +888,7 @@ public class SocializeApi<T extends SocializeObject, P extends SocializeProvider
 				response = new SocializeEntityResponse<T>();
 			}
 			
-			ListResult<T> results = null;
+			ListResult<T> results;
 			
 			switch (requestType) {
 			

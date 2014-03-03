@@ -29,6 +29,9 @@ public interface PropagationInfo {
 
 	public String getAppUrl();
 
-	public String getEntityUrl();
+    void setAppUrl(String appUrl);
 
+    public String getEntityUrl();
+
+    void setEntityUrl(String entityUrl);
 }

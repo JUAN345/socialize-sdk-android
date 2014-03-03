@@ -18,7 +18,8 @@ public class DefaultPropagationInfo implements Serializable, PropagationInfo {
 		return appUrl;
 	}
 	
-	public void setAppUrl(String appUrl) {
+	@Override
+    public void setAppUrl(String appUrl) {
 		this.appUrl = appUrl;
 	}
 	
@@ -30,7 +31,8 @@ public class DefaultPropagationInfo implements Serializable, PropagationInfo {
 		return entityUrl;
 	}
 	
-	public void setEntityUrl(String entityUrl) {
+	@Override
+    public void setEntityUrl(String entityUrl) {
 		this.entityUrl = entityUrl;
 	}
 }

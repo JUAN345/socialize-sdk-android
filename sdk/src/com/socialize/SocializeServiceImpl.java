@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import com.sharethis.loopy.sdk.Loopy;
 import com.socialize.android.ioc.IOCContainer;
 import com.socialize.android.ioc.Logger;
 import com.socialize.api.SocializeSession;
@@ -1011,6 +1012,8 @@ public class SocializeServiceImpl implements SocializeService {
 		if(locationProvider != null) {
 			locationProvider.pause(context);	
 		}
+
+        Loopy.onStop(context);
 	}
 
 	@Override
@@ -1061,13 +1064,21 @@ public class SocializeServiceImpl implements SocializeService {
 				appUtils.onResume(context);
 			}
 		}
+
+        Loopy.onStart(context);
 	}
 	
 	@Override
-	public void onCreate(Activity context, Bundle savedInstanceState) {}
+	public void onCreate(Activity context, Bundle savedInstanceState) {
+        Loopy.onCreate(context,
+                config.getProperty(SocializeConfig.SOCIALIZE_CONSUMER_KEY),
+                config.getProperty(SocializeConfig.SOCIALIZE_CONSUMER_SECRET));
+
+    }
 
 	@Override
 	public void onDestroy(Activity context) {
+        Loopy.onDestroy(context);
 		onContextDestroyed(context);
 	}
 
